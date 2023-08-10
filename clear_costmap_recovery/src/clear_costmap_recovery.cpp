@@ -65,7 +65,7 @@ void ClearCostmapRecovery::initialize(std::string name, tf::TransformListener* t
     private_nh.param("layer_names", clearable_layers, clearable_layers_default);
 
     for(unsigned i=0; i < clearable_layers.size(); i++) {
-        ROS_INFO("Recovery behavior will clear layer %s", clearable_layers[i].c_str());
+        ROS_INFO("%s Recovery behavior will clear [%d] layer %s", name_.c_str(), i + 1, clearable_layers[i].c_str());
         clearable_layers_.insert(clearable_layers[i]);
     }
 
@@ -114,6 +114,7 @@ void ClearCostmapRecovery::clear(costmap_2d::Costmap2DROS* costmap){
     }
 
     if(clearable_layers_.count(name)!=0){
+      ROS_INFO("%s Clearing %s", name_.c_str(), name.c_str());
       boost::shared_ptr<costmap_2d::CostmapLayer> costmap;
       costmap = boost::static_pointer_cast<costmap_2d::CostmapLayer>(plugin);
       clearMap(costmap, x, y);
