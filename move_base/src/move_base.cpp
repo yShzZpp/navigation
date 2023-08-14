@@ -50,9 +50,9 @@ namespace move_base {
     tf_(tf),
     as_(NULL),
     planner_costmap_ros_(NULL), controller_costmap_ros_(NULL),
-    bgp_loader_("nav_core", "nav_core::BaseGlobalPlanner"),
-    blp_loader_("nav_core", "nav_core::BaseLocalPlanner"), 
-    recovery_loader_("nav_core", "nav_core::RecoveryBehavior"),
+    bgp_loader_("nav_core", "nav_core::BaseGlobalPlanner"), // will find all the global planner plugins in the nav_core package
+    blp_loader_("nav_core", "nav_core::BaseLocalPlanner"),  // will find all the local planner plugins in the nav_core package
+    recovery_loader_("nav_core", "nav_core::RecoveryBehavior"), // will find all the recovery behaviors plugins in the nav_core package
     planner_plan_(NULL), latest_plan_(NULL), controller_plan_(NULL),
     runPlanner_(false), setup_(false), p_freq_change_(false), c_freq_change_(false), new_global_plan_(false) {
 
@@ -515,6 +515,7 @@ namespace move_base {
     //next, we'll normalize the quaternion and check that it transforms the vertical vector correctly
     tf_q.normalize();
 
+    // z-axis unit vector
     tf::Vector3 up(0, 0, 1);
 
     double dot = up.dot(up.rotate(tf_q.getAxis(), tf_q.getAngle()));
