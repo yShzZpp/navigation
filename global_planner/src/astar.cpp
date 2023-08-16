@@ -35,8 +35,10 @@
  * Author: Eitan Marder-Eppstein
  *         David V. Lu!!
  *********************************************************************/
+#include <cstdio>
 #include<global_planner/astar.h>
 #include<costmap_2d/cost_values.h>
+#include<cstring>
 
 namespace global_planner {
 
@@ -63,7 +65,27 @@ bool AStarExpansion::calculatePotentials(unsigned char* costs, double start_x, d
 
         int i = top.i;
         if (i == goal_i)
-            return true;
+        {
+          return true;
+          for (int i = start_y - 20; i < start_y + 20; i++)
+          {
+            std::string str;
+            for (int j = start_x - 10; j < start_x + 10; j++)
+            {
+              if (potential[i * nx_ + j] > 10000.0)
+              {
+                str += "xxxx.x ";
+                continue;
+              }
+              char cur[100];
+              sprintf(cur, "%06.1f ", potential[i * nx_ + j]);
+              str += cur;
+            }
+            ROS_INFO("%s", str.c_str());
+          }
+          ROS_INFO("goal_potential: %f,cycle: %d/%d, queue_size: %zu", potential[i], cycle, cycles, queue_.size());
+          return true;
+        }
 
         add(costs, potential, potential[i], i + 1, end_x, end_y);
         add(costs, potential, potential[i], i - 1, end_x, end_y);
