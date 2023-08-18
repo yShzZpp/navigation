@@ -134,8 +134,10 @@ lethal_cost_(253)致命cost，neutral_cost_(50)中立cost, factor_(3.0)
 pathStep_(0.5):
 
 stc:当前点在potential中的index
-stcnx:当前点上方在potential中的index
-stcpx:当前点下方在potential中的index
+stcpx:当前点上方在potential中的index
+stcnx:当前点下方在potential中的index
+
+gradx_,xgrady_:x梯度值 ,y梯度值,大小为地图大小
 
 
 dx,dy:double和unsigned int坐标的差值
@@ -147,7 +149,81 @@ nx,ny:将stc转为实际位置
 算法:
 
 1. 将当前点nx ny放入path中
+
 2. 判断路径是否震荡，或当前点周围的9个点是否未设值
+
+2.1 ture:取当前点四周的8个点potential最低点作为stc,dx=dy=0;如果8个点都未设值，则退出
+
+2.2 false: 计算当点，右点，下点，下右点的梯度
+
+计算每个点到他四周的potential的梯度值
+
+dx = 左点-右点的potential值
+dy = 上点-下点的potential值
+
+norm为dx dy的平方根
+
+gradx_[n] = dx / norm , grady_[n] = dy / norm
+x正数代表了向右，y正代表向下
+
+```
+potential
+起点为0.0 终点为200.0
+xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx 
+xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx 
+xxxxx.xxx xxxxx.xxx xxxxx.xxx 00177.246 00209.929 00259.929 00306.929 00353.929 xxxxx.xxx xxxxx.xxx xxxxx.xxx 
+xxxxx.xxx 00050.000 00085.200 00127.246 00172.139 00218.553 00265.553 00312.553 xxxxx.xxx xxxxx.xxx xxxxx.xxx 
+00050.000 00000.000 00050.000 00100.000 00150.000 00200.000 00247.000 00294.000 xxxxx.xxx xxxxx.xxx xxxxx.xxx 
+xxxxx.xxx xxxxx.xxx xxxxx.xxx 00147.000 00181.636 00222.819 00265.877 00310.018 xxxxx.xxx xxxxx.xxx xxxxx.xxx 
+xxxxx.xxx xxxxx.xxx xxxxx.xxx 00194.000 00220.537 00254.811 00293.172 00333.811 xxxxx.xxx xxxxx.xxx xxxxx.xxx 
+xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx 
+xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx xxxxx.xxx 
+```
+
+```
+stcpx-1                stcpx                stcpx+1
+      a------------------b------------------c   -
+      |                  |                  |   |
+      |                  |                  |   |  
+      |                  |                  |   |
+      |                  |                  |   |
+      |                  |                  |  0.05(resolution)
+      |                  |                  |   |  
+      |                  |                  |   |
+      |                  |                  |   |
+ stc-1|                  |stc               |   |              
+      d------------------e------------------f   -
+      |                  |       |          | stc+1
+      |                  |       |          |
+      |                  |       |          |
+      |                  |       dy         |
+      |                  |       |          |
+      |                  |       |          |
+      |                  |       |          |
+      |                  |---dx--* goal     |
+      |                  |                  |
+      g------------------h------------------i
+stcnx-1                stcnx                stcnx+1
+
+//双线性插值方法计算
+//为什么用1.0-dx表示离stc的权重：当dx越小 说明stc占比越高
+float x1 = (1.0 - dx) * gradx_[stc] + dx * gradx_[stc + 1];
+float x2 = (1.0 - dx) * gradx_[stcnx] + dx * gradx_[stcnx + 1];
+float x = (1.0 - dy) * x1 + dy * x2; // interpolated x
+float y1 = (1.0 - dx) * grady_[stc] + dx * grady_[stc + 1];
+float y2 = (1.0 - dx) * grady_[stcnx] + dx * grady_[stcnx + 1];
+float y = (1.0 - dy) * y1 + dy * y2; // interpolated y
+```
+
+```
+float ss = pathStep_ / hypot(x, y);
+dx += x * ss;
+dy += y * ss;
+```
+
+x y为实际需要移动的方向的权值，通过pathStep_计算出dx和dy
+
+如果dx，dy超过1则stc进行对应的加减
 
 
 
