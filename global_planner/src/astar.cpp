@@ -67,18 +67,19 @@ bool AStarExpansion::calculatePotentials(unsigned char* costs, double start_x, d
         if (i == goal_i)
         {
           return true;
-          for (int i = start_y - 20; i < start_y + 20; i++)
+          clearEndpoint(costs, potential, end_x, end_y, 2);
+          for (int j = end_y - 10; j < end_y + 10; j++)
           {
             std::string str;
-            for (int j = start_x - 10; j < start_x + 10; j++)
+            for (int k = end_x - 5; k < end_x + 5; k++)
             {
-              if (potential[i * nx_ + j] > 10000.0)
+              if (potential[j * nx_ + k] > 100000.0)
               {
-                str += "xxxx.x ";
+                str += "xxxxx.xxx ";
                 continue;
               }
               char cur[100];
-              sprintf(cur, "%06.1f ", potential[i * nx_ + j]);
+              sprintf(cur, "%09.3f ", potential[j * nx_ + k]);
               str += cur;
             }
             ROS_INFO("%s", str.c_str());
