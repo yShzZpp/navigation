@@ -127,7 +127,7 @@ namespace base_local_planner {
         double x_diff = robot_pose.getOrigin().x() - global_plan[i].pose.position.x;
         double y_diff = robot_pose.getOrigin().y() - global_plan[i].pose.position.y;
         sq_dist = x_diff * x_diff + y_diff * y_diff;
-        if (sq_dist <= sq_dist_threshold) {
+        if (sq_dist <= sq_dist_threshold) { // 找到全局路劲距离机器人最近的点
           break;
         }
         ++i;
@@ -137,7 +137,7 @@ namespace base_local_planner {
       geometry_msgs::PoseStamped newer_pose;
 
       //now we'll transform until points are outside of our distance threshold
-      while(i < (unsigned int)global_plan.size() && sq_dist <= sq_dist_threshold) {
+      while(i < (unsigned int)global_plan.size() && sq_dist <= sq_dist_threshold) { // 从最近的点开始，直到找到超出阈值的点
         const geometry_msgs::PoseStamped& pose = global_plan[i];
         poseStampedMsgToTF(pose, tf_pose);
         tf_pose.setData(plan_to_global_transform * tf_pose);

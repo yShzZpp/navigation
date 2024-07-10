@@ -43,6 +43,7 @@
 #include <boost/thread.hpp>
 
 #include <geometry_msgs/Twist.h>
+#include <cti_spdlog.h>
 
 namespace move_base {
 
@@ -57,6 +58,7 @@ namespace move_base {
     runPlanner_(false), setup_(false), p_freq_change_(false), c_freq_change_(false), new_global_plan_(false) {
 
     as_ = new MoveBaseActionServer(ros::NodeHandle(), "move_base", boost::bind(&MoveBase::executeCb, this, _1), false);
+    cti::buildingrobot::log::SpdLog log("move_base", 100 * 1024 * 1024, 20);
 
     ros::NodeHandle private_nh("~");
     ros::NodeHandle nh;
@@ -131,6 +133,7 @@ namespace move_base {
     try {
       tc_ = blp_loader_.createInstance(local_planner);
       ROS_INFO("Created local_planner %s", local_planner.c_str());
+      SPDLOG_INFO("Created local_planner {}", local_planner.c_str());
       tc_->initialize(blp_loader_.getName(local_planner), &tf_, controller_costmap_ros_);
     } catch (const pluginlib::PluginlibException& ex) {
       ROS_FATAL("Failed to create the %s planner, are you sure it is properly registered and that the containing library is built? Exception: %s", local_planner.c_str(), ex.what());

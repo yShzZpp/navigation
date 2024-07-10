@@ -140,6 +140,7 @@ Costmap2DROS::Costmap2DROS(std::string name, tf::TransformListener& tf) :
       boost::shared_ptr<Layer> plugin = plugin_loader_.createInstance(type);
       layered_costmap_->addPlugin(plugin);
       plugin->initialize(layered_costmap_, name + "/" + pname, &tf_);
+      SPDLOG_INFO("[{}] Initialized plugin {}, resolution is {}", name_, pname, layered_costmap_->getCostmap()->getResolution());
     }
   }
 
@@ -417,6 +418,7 @@ void Costmap2DROS::mapUpdateLoop(double frequency)
       {
         publisher_->publishCostmap();
         last_publish_ = now;
+        // ROS_INFO("[%s] Published costmap", name_.c_str());
       }
     }
     r.sleep();

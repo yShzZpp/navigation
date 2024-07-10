@@ -40,6 +40,7 @@
 #include <cmath>
 
 #include <base_local_planner/velocity_iterator.h>
+#include "cti_spdlog.h"
 
 namespace base_local_planner {
 
@@ -57,6 +58,7 @@ void SimpleTrajectoryGenerator::initialise(
 }
 
 
+// 对所有的速度采样点进行初始化
 void SimpleTrajectoryGenerator::initialise(
     const Eigen::Vector3f& pos,
     const Eigen::Vector3f& vel,
@@ -69,7 +71,7 @@ void SimpleTrajectoryGenerator::initialise(
    */
   double max_vel_th = limits->max_rot_vel;
   double min_vel_th = -1.0 * max_vel_th;
-  discretize_by_time_ = discretize_by_time;
+  discretize_by_time_ = discretize_by_time; // default is false
   Eigen::Vector3f acc_lim = limits->getAccLimits();
   pos_ = pos;
   vel_ = vel;
@@ -91,12 +93,13 @@ void SimpleTrajectoryGenerator::initialise(
     if ( ! use_dwa_) {
       // there is no point in overshooting the goal, and it also may break the
       // robot behavior, so we limit the velocities to those that do not overshoot in sim_time
+      // 根据机器人的位置和目标位置，计算机器人在sim_time时间内能达到的最大速度
       double dist = hypot(goal[0] - pos[0], goal[1] - pos[1]);
       max_vel_x = std::max(std::min(max_vel_x, dist / sim_time_), min_vel_x);
       max_vel_y = std::max(std::min(max_vel_y, dist / sim_time_), min_vel_y);
 
       // if we use continous acceleration, we can sample the max velocity we can reach in sim_time_
-      max_vel[0] = std::min(max_vel_x, vel[0] + acc_lim[0] * sim_time_);
+      max_vel[0] = std::min(max_vel_x, vel[0] + acc_lim[0] * sim_time_); // 判断在采样时间是否能到达想到达的max_vel_x速度
       max_vel[1] = std::min(max_vel_y, vel[1] + acc_lim[1] * sim_time_);
       max_vel[2] = std::min(max_vel_th, vel[2] + acc_lim[2] * sim_time_);
 
@@ -105,7 +108,8 @@ void SimpleTrajectoryGenerator::initialise(
       min_vel[2] = std::max(min_vel_th, vel[2] - acc_lim[2] * sim_time_);
     } else {
       // with dwa do not accelerate beyond the first step, we only sample within velocities we reach in sim_period
-      max_vel[0] = std::min(max_vel_x, vel[0] + acc_lim[0] * sim_period_);
+      // 在sim_period控制周期内的速度范围
+      max_vel[0] = std::min(max_vel_x, vel[0] + acc_lim[0] * sim_period_); // sim_period: 0.1 hz:10
       max_vel[1] = std::min(max_vel_y, vel[1] + acc_lim[1] * sim_period_);
       max_vel[2] = std::min(max_vel_th, vel[2] + acc_lim[2] * sim_period_);
 
@@ -143,6 +147,8 @@ void SimpleTrajectoryGenerator::setParameters(
   sim_time_ = sim_time;
   sim_granularity_ = sim_granularity;
   angular_sim_granularity_ = angular_sim_granularity;
+  SPDLOG_INFO("Sim time :{} Sim granularity :{} Angular sim granularity :{} Use dwa :{} Sim period :{}",
+              sim_time_, sim_granularity_, angular_sim_granularity_, use_dwa, sim_period);
   use_dwa_ = use_dwa;
   continued_acceleration_ = ! use_dwa_;
   sim_period_ = sim_period;
@@ -174,6 +180,7 @@ bool SimpleTrajectoryGenerator::nextTrajectory(Trajectory &comp_traj) {
 }
 
 /**
+ * @brief Generate and score a single trajectory
  * @param pos current position of robot
  * @param vel desired velocity for sampling
  */
@@ -182,7 +189,7 @@ bool SimpleTrajectoryGenerator::generateTrajectory(
       Eigen::Vector3f vel,
       Eigen::Vector3f sample_target_vel,
       base_local_planner::Trajectory& traj) {
-  double vmag = hypot(sample_target_vel[0], sample_target_vel[1]);
+  double vmag = hypot(sample_target_vel[0], sample_target_vel[1]); // 计算速度的模
   double eps = 1e-4;
   traj.cost_   = -1.0; // placed here in case we return early
   //trajectory might be reused so we'll make sure to reset it
@@ -190,33 +197,35 @@ bool SimpleTrajectoryGenerator::generateTrajectory(
 
   // make sure that the robot would at least be moving with one of
   // the required minimum velocities for translation and rotation (if set)
+  // 确保机器人至少以所需的最小速度之一进行平移和旋转（如果设置）
   if ((limits_->min_trans_vel >= 0 && vmag + eps < limits_->min_trans_vel) &&
       (limits_->min_rot_vel >= 0 && fabs(sample_target_vel[2]) + eps < limits_->min_rot_vel)) {
     return false;
   }
   // make sure we do not exceed max diagonal (x+y) translational velocity (if set)
+  // 确保不超过最大对角线（x+y）平移速度（如果设置）
   if (limits_->max_trans_vel >=0 && vmag - eps > limits_->max_trans_vel) {
     return false;
   }
 
   int num_steps;
-  if (discretize_by_time_) {
+  if (discretize_by_time_) { //fasle
     num_steps = ceil(sim_time_ / sim_granularity_);
   } else {
     //compute the number of steps we must take along this trajectory to be "safe"
     double sim_time_distance = vmag * sim_time_; // the distance the robot would travel in sim_time if it did not change velocity
     double sim_time_angle = fabs(sample_target_vel[2]) * sim_time_; // the angle the robot would rotate in sim_time
     num_steps =
-        ceil(std::max(sim_time_distance / sim_granularity_,
-            sim_time_angle    / angular_sim_granularity_));
+        ceil(std::max(sim_time_distance / sim_granularity_, // sim_granularity 默认为0.025 每一步的距离
+            sim_time_angle    / angular_sim_granularity_));  // angular_sim_granularity 默认为0.1
   }
 
   //compute a timestep
-  double dt = sim_time_ / num_steps;
+  double dt = sim_time_ / num_steps; // 每一步的时间
   traj.time_delta_ = dt;
 
   Eigen::Vector3f loop_vel;
-  if (continued_acceleration_) {
+  if (continued_acceleration_) { //连续加速 == !use_dwa
     // assuming the velocity of the first cycle is the one we want to store in the trajectory object
     loop_vel = computeNewVelocities(sample_target_vel, vel, limits_->getAccLimits(), dt);
     traj.xv_     = loop_vel[0];
@@ -236,7 +245,7 @@ bool SimpleTrajectoryGenerator::generateTrajectory(
     //add the point to the trajectory so we can draw it later if we want
     traj.addPoint(pos[0], pos[1], pos[2]);
 
-    if (continued_acceleration_) {
+    if (continued_acceleration_) { // !use_dwa
       //calculate velocities
       loop_vel = computeNewVelocities(sample_target_vel, loop_vel, limits_->getAccLimits(), dt);
       //ROS_WARN_NAMED("Generator", "Flag: %d, Loop_Vel %f, %f, %f", continued_acceleration_, loop_vel[0], loop_vel[1], loop_vel[2]);
@@ -253,8 +262,10 @@ bool SimpleTrajectoryGenerator::generateTrajectory(
 Eigen::Vector3f SimpleTrajectoryGenerator::computeNewPositions(const Eigen::Vector3f& pos,
     const Eigen::Vector3f& vel, double dt) {
   Eigen::Vector3f new_pos = Eigen::Vector3f::Zero();
-  new_pos[0] = pos[0] + (vel[0] * cos(pos[2]) + vel[1] * cos(M_PI_2 + pos[2])) * dt;
-  new_pos[1] = pos[1] + (vel[0] * sin(pos[2]) + vel[1] * sin(M_PI_2 + pos[2])) * dt;
+  // new_pos[0] = pos[0] + (vel[0] * cos(pos[2]) + vel[1] * cos(M_PI_2 + pos[2])) * dt;  // cos(M_PI - θ) = -cos(θ) 因此 -cos(M_PI_2 - θ) = cos(M_PI_2 + θ)
+  // new_pos[1] = pos[1] + (vel[0] * sin(pos[2]) + vel[1] * sin(M_PI_2 + pos[2])) * dt;  // sin(M_PI - θ) = sin(θ) 因此 -sin(M_PI_2 - θ) = sin(M_PI_2 + θ)
+  new_pos[0] = pos[0] + (vel[0] * cos(pos[2]) - vel[1] * cos(M_PI_2 - pos[2])) * dt;  // cos(M_PI - θ) = -cos(θ) 因此 -cos(M_PI_2 - θ) = cos(M_PI_2 + θ)
+  new_pos[1] = pos[1] + (vel[0] * sin(pos[2]) + vel[1] * sin(M_PI_2 - pos[2])) * dt;  // sin(M_PI - θ) = sin(θ) 因此 sin(M_PI_2 - θ) = sin(M_PI_2 + θ)
   new_pos[2] = pos[2] + vel[2] * dt;
   return new_pos;
 }

@@ -42,6 +42,7 @@
 #include <queue>
 #include <geometry_msgs/Point.h>
 #include <boost/thread.hpp>
+#include "cti_spdlog.h"
 
 namespace costmap_2d
 {

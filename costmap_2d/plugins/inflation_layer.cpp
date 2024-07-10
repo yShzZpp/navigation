@@ -182,6 +182,11 @@ void InflationLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, 
 
   unsigned char* master_array = master_grid.getCharMap();
   unsigned int size_x = master_grid.getSizeInCellsX(), size_y = master_grid.getSizeInCellsY();
+  // size_x 和 size_y 是localcostmap的长和宽(5米 分辨率为0.05时，size_x = 100, size_y = 100)
+  // min_i 和 min_j 是localcostmap的左上角的坐标
+  // max_i 和 max_j 是localcostmap的右下角的坐标
+  // ROS_INFO("InflationLayer::%s: cell_inflation_radius: %d, inflation_radius: %f,size_x: %d, size_y: %d, min_i: %d, min_j: %d, max_i: %d, max_j: %d",
+  //             __func__, cell_inflation_radius_, inflation_radius_, size_x, size_y, min_i, min_j, max_i, max_j);
 
   if (seen_ == NULL) {
     ROS_WARN("InflationLayer::updateCosts(): seen_ array is NULL");
@@ -315,6 +320,8 @@ void InflationLayer::computeCaches()
 
     cached_costs_ = new unsigned char*[cell_inflation_radius_ + 2];
     cached_distances_ = new double*[cell_inflation_radius_ + 2];
+    SPDLOG_INFO("InflationLayer::{}: inflation_radius = {}, cell_inflation_radius = {}, weight = {}",
+                __func__, inflation_radius_, cell_inflation_radius_, weight_);
 
     for (unsigned int i = 0; i <= cell_inflation_radius_ + 1; ++i)
     {
@@ -376,6 +383,8 @@ void InflationLayer::setInflationParameters(double inflation_radius, double cost
     cell_inflation_radius_ = cellDistance(inflation_radius_);
     weight_ = cost_scaling_factor;
     need_reinflation_ = true;
+    SPDLOG_INFO("InflationLayer::setInflationParameters(): inflation_radius = {}, cell_inflation_radius = {}, weight = {}",
+                inflation_radius_, cell_inflation_radius_, weight_);
     computeCaches();
   }
 }

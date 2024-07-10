@@ -44,6 +44,7 @@
 #include <costmap_2d/InflationPluginConfig.h>
 #include <dynamic_reconfigure/server.h>
 #include <boost/thread.hpp>
+#include "cti_spdlog.h"
 
 namespace costmap_2d
 {
@@ -104,13 +105,13 @@ public:
     unsigned char cost = 0;
     if (distance == 0)
       cost = LETHAL_OBSTACLE;
-    else if (distance * resolution_ <= inscribed_radius_)
+    else if (distance * resolution_ <= inscribed_radius_)// 内接圆半径
       cost = INSCRIBED_INFLATED_OBSTACLE;
     else
     {
       // make sure cost falls off by Euclidean distance
       double euclidean_distance = distance * resolution_;
-      double factor = exp(-1.0 * weight_ * (euclidean_distance - inscribed_radius_));
+      double factor = exp(-1.0 * weight_ * (euclidean_distance - inscribed_radius_)); //1/e^-(n) 权重：距离越远，权重越小，weight_越大，权重越小
       cost = (unsigned char)((INSCRIBED_INFLATED_OBSTACLE - 1) * factor);
     }
     return cost;
