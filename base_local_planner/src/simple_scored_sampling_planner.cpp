@@ -89,6 +89,7 @@ namespace base_local_planner {
       TrajectoryCostFunction* loop_critic_p = *loop_critic;
       if (loop_critic_p->prepare() == false) {
         ROS_WARN("A scoring function failed to prepare");
+        SPDLOG_INFO("A scoring function failed to prepare");
         return false;
       }
     }

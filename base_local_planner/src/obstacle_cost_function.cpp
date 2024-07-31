@@ -77,7 +77,8 @@ double ObstacleCostFunction::scoreTrajectory(Trajectory &traj) {
   double px, py, pth;
   if (footprint_spec_.size() == 0) {
     // Bug, should never happen
-    ROS_ERROR("Footprint spec is empty, maybe missing call to setFootprint?");
+    ROS_ERROR("=== obstacle Footprint spec is empty, maybe missing call to setFootprint?");
+    SPDLOG_ERROR("=== obstacle Footprint spec is empty, maybe missing call to setFootprint?");
     return -9;
   }
 
@@ -127,12 +128,14 @@ double ObstacleCostFunction::footprintCost (
   double footprint_cost = world_model->footprintCost(x, y, th, footprint_spec);
 
   if (footprint_cost < 0) {
+    // SPDLOG_ERROR("Footprint cost 小于0 : {}，返回-6.0, footprint size: {}",footprint_cost,  footprint_spec.size());
     return -6.0;
   }
   unsigned int cell_x, cell_y;
 
   //we won't allow trajectories that go off the map... shouldn't happen that often anyways
   if ( ! costmap->worldToMap(x, y, cell_x, cell_y)) {
+    // SPDLOG_ERROR("Trajectory goes off the map, 返回-7.0");
     return -7.0;
   }
 

@@ -39,6 +39,7 @@
 #define TRAJECTORYCOSTFUNCTION_H_
 
 #include <base_local_planner/trajectory.h>
+#include "cti_spdlog.h"
 
 namespace base_local_planner {
 

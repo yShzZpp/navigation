@@ -168,10 +168,10 @@ bool SimpleTrajectoryGenerator::nextTrajectory(Trajectory &comp_traj) {
   bool result = false;
   if (hasMoreTrajectories()) {
     if (generateTrajectory(
-        pos_,
-        vel_,
-        sample_params_[next_sample_index_],
-        comp_traj)) {
+        pos_, //当前位置
+        vel_, //当前速度
+        sample_params_[next_sample_index_], //采样速度
+        comp_traj)) {//生成轨迹
       result = true;
     }
   }
@@ -210,7 +210,7 @@ bool SimpleTrajectoryGenerator::generateTrajectory(
 
   int num_steps;
   if (discretize_by_time_) { //fasle
-    num_steps = ceil(sim_time_ / sim_granularity_);
+    num_steps = ceil(sim_time_ / sim_granularity_); //1.6 / 0.025
   } else {
     //compute the number of steps we must take along this trajectory to be "safe"
     double sim_time_distance = vmag * sim_time_; // the distance the robot would travel in sim_time if it did not change velocity
@@ -228,13 +228,13 @@ bool SimpleTrajectoryGenerator::generateTrajectory(
   if (continued_acceleration_) { //连续加速 == !use_dwa
     // assuming the velocity of the first cycle is the one we want to store in the trajectory object
     loop_vel = computeNewVelocities(sample_target_vel, vel, limits_->getAccLimits(), dt);
-    traj.xv_     = loop_vel[0];
+    traj.xv_     = loop_vel[0]; //此刻速度
     traj.yv_     = loop_vel[1];
     traj.thetav_ = loop_vel[2];
   } else {
     // assuming sample_vel is our target velocity within acc limits for one timestep
     loop_vel = sample_target_vel;
-    traj.xv_     = sample_target_vel[0];
+    traj.xv_     = sample_target_vel[0]; //此刻的速度
     traj.yv_     = sample_target_vel[1];
     traj.thetav_ = sample_target_vel[2];
   }
