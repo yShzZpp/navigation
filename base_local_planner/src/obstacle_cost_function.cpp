@@ -59,8 +59,8 @@ ObstacleCostFunction::~ObstacleCostFunction() {
 void ObstacleCostFunction::setParams(double max_trans_vel, double max_scaling_factor, double scaling_speed) {
   // TODO: move this to prepare if possible
   max_trans_vel_ = max_trans_vel;
-  max_scaling_factor_ = max_scaling_factor;
-  scaling_speed_ = scaling_speed;
+  max_scaling_factor_ = max_scaling_factor; // footprint 扩大因子
+  scaling_speed_ = scaling_speed; // 开始扩大footprint的速度
 }
 
 void ObstacleCostFunction::setFootprint(std::vector<geometry_msgs::Point> footprint_spec) {
@@ -72,7 +72,7 @@ bool ObstacleCostFunction::prepare() {
 }
 
 double ObstacleCostFunction::scoreTrajectory(Trajectory &traj) {
-  double cost = 0;
+  double cost = -1;
   double scale = getScalingFactor(traj, scaling_speed_, max_trans_vel_, max_scaling_factor_);
   double px, py, pth;
   if (footprint_spec_.size() == 0) {
@@ -94,7 +94,7 @@ double ObstacleCostFunction::scoreTrajectory(Trajectory &traj) {
 
     if(sum_scores_)
         cost +=  f_cost;
-    else
+    else if(f_cost > cost)
         cost = f_cost;
   }
   return cost;

@@ -148,7 +148,7 @@ void ObstacleLayer::onInitialize()
     if (clearing)
       clearing_buffers_.push_back(observation_buffers_.back());
 
-    ROS_DEBUG(
+    ROS_INFO(
         "Created an observation buffer for source %s, topic %s, global frame: %s, "
         "expected update rate: %.2f, observation persistence: %.2f",
         source.c_str(), topic.c_str(), global_frame_.c_str(), expected_update_rate, observation_keep_time);
@@ -483,7 +483,7 @@ bool ObstacleLayer::getClearingObservations(std::vector<Observation>& clearing_o
 {
   bool current = true;
   // get the clearing observations
-  for (unsigned int i = 0; i < clearing_buffers_.size(); ++i)
+  for (unsigned int i = 0; i < clearing_buffers_.size(); ++i) // 有多少个传感器数据就有多少个
   {
     clearing_buffers_[i]->lock();
     clearing_buffers_[i]->getObservations(clearing_observations);

@@ -35,6 +35,7 @@
 * Author: Eitan Marder-Eppstein
 *         Mike Phillips (put the planner in its own thread)
 *********************************************************************/
+#include "ros/node_handle.h"
 #include <move_base/move_base.h>
 #include <move_base_msgs/RecoveryStatus.h>
 #include <cmath>
@@ -43,7 +44,7 @@
 #include <boost/thread.hpp>
 
 #include <geometry_msgs/Twist.h>
-#include <cti_spdlog.h>
+#include "/opt/cti/kinetic/include/cti_spdlog.h"
 
 namespace move_base {
 
@@ -57,10 +58,17 @@ namespace move_base {
     planner_plan_(NULL), latest_plan_(NULL), controller_plan_(NULL),
     runPlanner_(false), setup_(false), p_freq_change_(false), c_freq_change_(false), new_global_plan_(false) {
 
-    as_ = new MoveBaseActionServer(ros::NodeHandle(), "move_base", boost::bind(&MoveBase::executeCb, this, _1), false);
-    cti::buildingrobot::log::SpdLog log("move_base", 100 * 1024 * 1024, 20);
 
     ros::NodeHandle private_nh("~");
+    std::string name = ros::NodeHandle().getNamespace();
+    boost::erase_all(name, "/");
+    ROS_INFO("name: %s", name.c_str());
+    cti::buildingrobot::log::SpdLog log(name+"_move_base", 100 * 1024 * 1024, 20);
+    log_ = std::make_shared<cti::buildingrobot::log::SpdLog>(log);
+
+    as_ = new MoveBaseActionServer(ros::NodeHandle(), "move_base", boost::bind(&MoveBase::executeCb, this, _1), false);
+    // log.should_log(spdlog::level::debug);
+    //set debug
     ros::NodeHandle nh;
 
     recovery_trigger_ = PLANNING_R;
@@ -649,6 +657,12 @@ namespace move_base {
       return;
     }
 
+    ros::NodeHandle private_nh("~");
+    std::string name = ros::NodeHandle().getNamespace();
+    boost::erase_all(name, "/");
+    ROS_INFO("cb name: %s", name.c_str());
+    cti::buildingrobot::log::SpdLog log(name+"_move_base", 100 * 1024 * 1024, 20);
+
     geometry_msgs::PoseStamped goal = goalToGlobalFrame(move_base_goal->target_pose);
 
     //we have a goal so start the planner
@@ -808,6 +822,7 @@ namespace move_base {
     move_base_msgs::MoveBaseFeedback feedback;
     feedback.base_position = current_position;
     as_->publishFeedback(feedback);
+    // SPDLOG_INFO("Current position: x: {}, y: {}", current_position.pose.position.x, current_position.pose.position.y);
 
     //check to see if we've moved far enough to reset our oscillation timeout
     if(distance(current_position, oscillation_pose_) >= oscillation_distance_)

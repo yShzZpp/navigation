@@ -217,7 +217,7 @@ bool SimpleTrajectoryGenerator::generateTrajectory(
     double sim_time_angle = fabs(sample_target_vel[2]) * sim_time_; // the angle the robot would rotate in sim_time
     num_steps =
         ceil(std::max(sim_time_distance / sim_granularity_, // sim_granularity 默认为0.025 每一步的距离
-            sim_time_angle    / angular_sim_granularity_));  // angular_sim_granularity 默认为0.1
+            sim_time_angle / angular_sim_granularity_));  // angular_sim_granularity 默认为0.1
   }
 
   //compute a timestep

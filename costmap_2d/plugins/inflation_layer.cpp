@@ -320,7 +320,7 @@ void InflationLayer::computeCaches()
 
     cached_costs_ = new unsigned char*[cell_inflation_radius_ + 2];
     cached_distances_ = new double*[cell_inflation_radius_ + 2];
-    SPDLOG_INFO("InflationLayer::{}: inflation_radius = {}, cell_inflation_radius = {}, weight = {}",
+    ROS_INFO("InflationLayer::{%s}: inflation_radius = {%f}, cell_inflation_radius = {%u}, weight = {%f}",
                 __func__, inflation_radius_, cell_inflation_radius_, weight_);
 
     for (unsigned int i = 0; i <= cell_inflation_radius_ + 1; ++i)
@@ -383,7 +383,7 @@ void InflationLayer::setInflationParameters(double inflation_radius, double cost
     cell_inflation_radius_ = cellDistance(inflation_radius_);
     weight_ = cost_scaling_factor;
     need_reinflation_ = true;
-    SPDLOG_INFO("InflationLayer::setInflationParameters(): inflation_radius = {}, cell_inflation_radius = {}, weight = {}",
+    ROS_INFO("InflationLayer::setInflationParameters(): inflation_radius = {%f}, cell_inflation_radius = {%u}, weight = {%f}",
                 inflation_radius_, cell_inflation_radius_, weight_);
     computeCaches();
   }

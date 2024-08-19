@@ -269,7 +269,9 @@ void VoxelLayer::raytraceFreespace(const Observation& clearing_observation, doub
   if (clearing_observation.cloud_->points.size() == 0)
     return;
 
+  // 获取传感器的原点世界坐标
   double sensor_x, sensor_y, sensor_z;
+  // 获取传感器的原点map坐标
   double ox = clearing_observation.origin_.x;
   double oy = clearing_observation.origin_.y;
   double oz = clearing_observation.origin_.z;
@@ -283,6 +285,7 @@ void VoxelLayer::raytraceFreespace(const Observation& clearing_observation, doub
     return;
   }
 
+  // 如果是雷达就相当于是雷达的点
   bool publish_clearing_points = (clearing_endpoints_pub_.getNumSubscribers() > 0);
   if (publish_clearing_points)
   {
@@ -294,6 +297,7 @@ void VoxelLayer::raytraceFreespace(const Observation& clearing_observation, doub
   double map_end_x = origin_x_ + getSizeInMetersX();
   double map_end_y = origin_y_ + getSizeInMetersY();
 
+  // 遍历每一个点云
   for (unsigned int i = 0; i < clearing_observation.cloud_->points.size(); ++i)
   {
     double wpx = clearing_observation.cloud_->points[i].x;
@@ -310,7 +314,7 @@ void VoxelLayer::raytraceFreespace(const Observation& clearing_observation, doub
     double a = wpx - ox;
     double b = wpy - oy;
     double c = wpz - oz;
-    double t = 1.0;
+    double t = 1.0; // 射线长度的比例银子
 
     // we can only raytrace to a maximum z height
     if (wpz > max_obstacle_height_)
@@ -352,9 +356,10 @@ void VoxelLayer::raytraceFreespace(const Observation& clearing_observation, doub
     double point_x, point_y, point_z;
     if (worldToMap3DFloat(wpx, wpy, wpz, point_x, point_y, point_z))
     {
-      unsigned int cell_raytrace_range = cellDistance(clearing_observation.raytrace_range_);
+      unsigned int cell_raytrace_range = cellDistance(clearing_observation.raytrace_range_); // 6 / 0.02
 
       // voxel_grid_.markVoxelLine(sensor_x, sensor_y, sensor_z, point_x, point_y, point_z);
+      // 传感器原点到打到的点
       voxel_grid_.clearVoxelLineInMap(sensor_x, sensor_y, sensor_z, point_x, point_y, point_z, costmap_,
                                       unknown_threshold_, mark_threshold_, FREE_SPACE, NO_INFORMATION,
                                       cell_raytrace_range);
